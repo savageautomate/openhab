@@ -47,8 +47,16 @@ public class ApplicationCommandMessageClass extends ZWaveCommandProcessor {
 
         node.resetResendCount();
         node.incrementReceiveCount();
-
+        int unknownByte = incomingMessage.getMessagePayloadByte(2);
         int commandClassCode = incomingMessage.getMessagePayloadByte(3);
+
+        // [HACK]  TODO: replace this hack with a more appropriate impl.
+        // This is to prevent duplicate Homeseer HS-(WS|WD)-100 central scene messages from being processed
+        if(node.getManufacturer() == 0x000C && node.getDeviceType() == 0x4447  &&
+                commandClassCode == 0x5b && unknownByte == 0x08){
+            return true;
+        }
+
         CommandClass commandClass = CommandClass.getCommandClass(commandClassCode);
         if (commandClass == null) {
             logger.error(String.format("NODE %d: Unknown command class 0x%02x", nodeId, commandClassCode));
