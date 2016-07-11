@@ -59,6 +59,15 @@
         <Name>Linear</Name>
         <Product>
             <Reference>
+                <Type>2005</Type>
+                <Id>0503</Id>
+            </Reference>
+            <Model>WA105DBZ</Model>
+            <Label lang="en">Siren</Label>
+            <ConfigFile>linear/wa105dbz.xml</ConfigFile>
+        </Product>
+        <Product>
+            <Reference>
                 <Type>5257</Type>
                 <Id>3533</Id>
             </Reference>
@@ -1013,7 +1022,8 @@
             </Reference>
             <Model>ZW100-A</Model>
             <Label lang="en">MultiSensor 6</Label>
-            <ConfigFile>aeon/zw100-a.xml</ConfigFile>
+            <ConfigFile VersionMax="1.6">aeon/zw100-a.xml</ConfigFile>
+            <ConfigFile VersionMin="1.7">aeon/zw100-17.xml</ConfigFile>
         </Product>
         <Product>
             <Reference>
@@ -1248,6 +1258,15 @@
             <Label lang="en">Smart Dimmer 6</Label>
             <ConfigFile>aeon/zw099.xml</ConfigFile>
         </Product>
+        <Product>
+            <Reference>
+                <Type>0002</Type>
+                <Id>0070</Id>
+            </Reference>
+            <Model>ZW112</Model>
+            <Label lang="en">Door/Window Sensor 6</Label>
+            <ConfigFile>aeon/zw112.xml</ConfigFile>
+        </Product>
     </Manufacturer>
     <Manufacturer>
         <Id>0098</Id>
@@ -1298,6 +1317,10 @@
             <Reference>
                 <Type>6401</Type>
                 <Id>107</Id>
+            </Reference>
+            <Reference>
+                <Type>6401</Type>
+                <Id>01FD</Id>
             </Reference>
             <Model>CT100</Model>
             <Label lang="en">Z-Wave Thermostat</Label>
@@ -1366,6 +1389,15 @@
     <Manufacturer>
         <Name>Vision Security</Name>
         <Id>0109</Id>
+        <Product>
+            <Reference>
+                <Type>0002</Type>
+                <Id>FFFF</Id>
+            </Reference>
+            <Model>YRD220</Model>
+            <Label lang="en">Vision Real Living Touchscreen Deadbolt</Label>
+            <ConfigFile>vision/yrd220.xml</ConfigFile>
+        </Product>
         <Product>
             <Reference>
                 <Type>200D</Type>
@@ -2209,6 +2241,15 @@
         </Product>
         <Product>
             <Reference>
+                <Type>0003</Type>
+                <Id>8010</Id>
+            </Reference>
+            <Model>014G0160</Model>
+            <Label lang="en">Z-Wave room sensor</Label>
+            <ConfigFile>danfoss/014g0160.xml</ConfigFile>
+        </Product>
+        <Product>
+            <Reference>
                 <Type>0005</Type>
                 <Id>0003</Id>
             </Reference>
@@ -2261,6 +2302,14 @@
             <Model>HRVCCM</Model>
             <Label lang="en">Danfoss Air CCM</Label>
             <ConfigFile>danfoss/hrv_ccm.xml</ConfigFile>
+        </Product>
+        <Product>
+            <Reference>
+                <Type>0003</Type>
+                <Id>8010</Id>
+            </Reference>
+            <Model>014G0160</Model>
+            <Label lang="en">Z-Wave room sensor</Label>
         </Product>
     </Manufacturer>
     <Manufacturer>
@@ -2514,9 +2563,10 @@
                 <Type>101</Type>
                 <Id>0603</Id>
             </Reference>
-            <Model>ZW20R</Model>
-            <Label lang="en">20A Tamper Resistant Duplex Receptacle</Label>
-            <ConfigFile>enerwave/zw20r.xml</ConfigFile>
+            <Model>ZW20R/ZWN-RSM2</Model>
+            <Label lang="en">20A Tamper Resistant Duplex Receptacle / Smart Dual Relay Switch Module</Label>
+            <ConfigFile VersionMax="3.255">enerwave/zw20r.xml</ConfigFile>
+            <ConfigFile VersionMin="4">enerwave/zwn-rsm2.xml</ConfigFile>
         </Product>
         <Product>
             <Reference>
@@ -2868,6 +2918,15 @@
         <Name>Wintop</Name>
         <Product>
             <Reference>
+                <Type>1180</Type>
+                <Id>5501</Id>
+            </Reference>
+            <Model>Multisensor</Model>
+            <Label lang="en">Wintop Multi-sensor</Label>
+            <ConfigFile>wintop/multisensor.xml</ConfigFile>
+        </Product>
+        <Product>
+            <Reference>
                 <Type>1182</Type>
                 <Id>4501</Id>
             </Reference>
@@ -2970,6 +3029,15 @@
         </Product>
         <Product>
             <Reference>
+                <Type>0003</Type>
+                <Id>0101</Id>
+            </Reference>
+            <Model>Molite</Model>
+            <Label lang="en">Movement sensor with temperature and light sensor</Label>
+            <ConfigFile>benext/molite.xml</ConfigFile>
+        </Product>
+        <Product>
+            <Reference>
                 <Type>0008</Type>
                 <Id>0101</Id>
             </Reference>
@@ -3012,6 +3080,15 @@
     <Manufacturer>
         <Id>0154</Id>
         <Name>POPP</Name>
+        <Product>
+            <Reference>
+                <Type>0004</Type>
+                <Id>0002</Id>
+            </Reference>
+            <Model>005107</Model>
+            <Label lang="en">Solar Powered Outdoor Siren</Label>
+            <ConfigFile>popp/005107.xml</ConfigFile>
+        </Product>
         <Product>
             <Reference>
                 <Type>0001</Type>
@@ -3092,6 +3169,23 @@
             <Model>YRD210</Model>
             <Label lang="en">Push Button Deadbolt</Label>
             <ConfigFile>yale/yrd210.xml</ConfigFile>
+        </Product>
+        <Product>
+            <Reference>
+                <Type>0002</Type>
+                <Id>0000</Id>
+            </Reference>
+            <Reference>
+                <Type>0002</Type>
+                <Id>AA00</Id>
+            </Reference>
+            <Reference>
+                <Type>0002</Type>
+                <Id>FFFF</Id>
+            </Reference>
+            <Model>YRD220</Model>
+            <Label lang="en">Yale Real Living Touchscreen Deadbolt</Label>
+            <ConfigFile>yale/yrd220.xml</ConfigFile>
         </Product>
     </Manufacturer>
     <Manufacturer>
@@ -3476,4 +3570,17 @@
             <ConfigFile>homeseer/hsws100.xml</ConfigFile>
         </Product>
     </Manufacturer>
+    <Manufacturer>
+        <Id>0234</Id>
+        <Name>Logic Home Control</Name>
+        <Product>
+            <Reference>
+                <Type>0003</Type>
+                <Id>010A</Id>
+            </Reference>
+            <Model>ZHC5010</Model>
+            <Label lang="en">FUGA Wall 4-way Switch + Relay</Label>
+            <ConfigFile>logic/zhc5010.xml</ConfigFile>
+        </Product>
+    </Manufacturer> 
 </Manufacturers>

@@ -38,11 +38,26 @@
     <configfile finalname="${openhab.conf}/services/mios.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/mios</configfile>
   </feature>
 
+  <feature name="openhab-action-mqtt" description="MQTT Action" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.io/org.openhab.io.transport.mqtt/${project.version}</bundle>
+    <bundle start-level="80">mvn:org.openhab.action/org.openhab.action.mqtt/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/mqtt.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/mqtt</configfile>
+  </feature>
+
   <feature name="openhab-action-pebble" description="Pebble Action" version="${project.version}">
     <feature>openhab-runtime-base</feature>
     <feature>openhab-runtime-compat1x</feature>
     <bundle start-level="80">mvn:org.openhab.action/org.openhab.action.pebble/${project.version}</bundle>
     <configfile finalname="${openhab.conf}/services/pebble.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/pebble</configfile>
+  </feature>
+
+  <feature name="openhab-action-prowl" description="Prowl Action" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.action/org.openhab.action.prowl/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/prowl.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/prowl</configfile>
   </feature>
 
   <feature name="openhab-action-pushover" description="Pushover Action" version="${project.version}">
@@ -59,10 +74,18 @@
     <configfile finalname="${openhab.conf}/services/telegram.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/telegram</configfile>
   </feature>
 
+  <feature name="openhab-action-twitter" description="Twitter Action" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.action/org.openhab.action.twitter/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/twitter.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/twitter</configfile>
+  </feature>
+
   <feature name="openhab-action-xbmc" description="XBMC Action" version="${project.version}">
     <feature>openhab-runtime-base</feature>
     <feature>openhab-runtime-compat1x</feature>
     <bundle start-level="80">mvn:org.openhab.action/org.openhab.action.xbmc/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/xbmc.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/xbmc</configfile>
   </feature>
 
   <feature name="openhab-action-xmpp" description="XMPP Action" version="${project.version}">
@@ -202,6 +225,13 @@
     <feature>openhab-runtime-compat1x</feature>
     <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.gc100ir/${project.version}</bundle>
   </feature>
+  
+  <feature name="openhab-binding-gpio" description="GPIO Binding" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <feature>openhab-io-gpio</feature>
+    <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.gpio/${project.version}</bundle>
+  </feature>
 
   <feature name="openhab-binding-heatmiser" description="Heatmiser Binding" version="${project.version}">
     <feature>openhab-runtime-base</feature>
@@ -258,6 +288,20 @@
     <feature>openhab-runtime-base</feature>
     <feature>openhab-runtime-compat1x</feature>
     <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.lcn/${project.version}</bundle>
+  </feature>
+
+  <feature name="openhab-binding-lgtv" description="LGTV Binding" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.lgtv/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/lgtv.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/lgtv</configfile>
+  </feature>
+
+  <feature name="openhab-binding-mochadx10" description="MochadX10 Binding" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.mochadx10/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/mochadx10.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/mochadx10</configfile>
   </feature>
 
   <feature name="openhab-binding-milight" description="Milight Binding" version="${project.version}">
@@ -343,11 +387,33 @@
     <configfile finalname="${openhab.conf}/services/nest.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/nest</configfile>
   </feature>
 
+  <feature name="openhab-binding-networkupstools" description="Network UPS Tools Binding" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.networkupstools/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/networkupstools.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/networkupstools</configfile>
+  </feature>
+
   <feature name="openhab-binding-nibeheatpump" description="Nibe Heatpump Binding" version="${project.version}">
     <feature>openhab-runtime-base</feature>
     <feature>openhab-runtime-compat1x</feature>
     <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.nibeheatpump/${project.version}</bundle>
     <configfile finalname="${openhab.conf}/services/nibeheatpump.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/nibeheatpump</configfile>
+  </feature>
+
+  <feature name="openhab-binding-nikobus" description="Nikobus Binding" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <feature>openhab-transport-serial</feature>
+    <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.nikobus/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/nikobus.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/nikobus</configfile>
+  </feature>
+
+  <feature name="openhab-binding-novelanheatpump" description="Novelan Heatpump Binding" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.novelanheatpump/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/novelanheatpump.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/novelanheatpump</configfile>
   </feature>
 
   <feature name="openhab-binding-onkyo" description="Onkyo Binding" version="${project.version}">
@@ -474,6 +540,7 @@
     <feature>openhab-runtime-base</feature>
     <feature>openhab-runtime-compat1x</feature>
     <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.xbmc/${project.version}</bundle>
+    <configfile finalname="${openhab.conf}/services/xbmc.cfg" override="false">mvn:${project.groupId}/openhab-addons-external/${project.version}/cfg/xbmc</configfile>
   </feature>
 
   <!-- persistence -->
@@ -600,6 +667,11 @@
   </feature>
 
   <!-- shared features, not end user facing -->
+  <feature name="openhab-io-gpio" description="GPIO IO" version="${project.version}">
+    <feature>openhab-runtime-base</feature>
+    <feature>openhab-runtime-compat1x</feature>
+    <bundle start-level="80">mvn:org.openhab.io/org.openhab.io.gpio/${project.version}</bundle>
+  </feature>
 
   <feature name="openhab-transport-cul" description="CUL Transport" version="${project.version}">
     <feature>openhab-runtime-base</feature>
