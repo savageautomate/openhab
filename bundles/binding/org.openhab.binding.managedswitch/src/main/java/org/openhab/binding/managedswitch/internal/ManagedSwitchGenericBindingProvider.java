@@ -18,8 +18,8 @@ import org.openhab.model.item.binding.BindingConfigParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 
 /**
@@ -41,30 +41,58 @@ public class ManagedSwitchGenericBindingProvider extends AbstractGenericBindingP
             LoggerFactory.getLogger(ManagedSwitchGenericBindingProvider.class);
 
     private Map<String, String> targetBindingItems = new HashMap<>();
+    private Set<String> onSensorBindingItems = new HashSet<>();
+    private Set<String> offSensorBindingItems = new HashSet<>();
+
+    @Override
+    public void removeConfigurations(String context) {
+        logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> removeConfigurations() is called!");
+        super.removeConfigurations(context);
+        targetBindingItems.clear();
+        onSensorBindingItems.clear();
+        offSensorBindingItems.clear();
+    }
 
     @Override
     public boolean providesBindingFor(String itemName) {
-        //logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> providesBindingFor({}) is called!", itemName);
         if(providesBindingForManagedItem(itemName)){
             return true;
         }
         if(providesBindingForManagedTarget(itemName)){
             return true;
         }
+        if(providesBindingForManagedSensor(itemName)){
+            return true;
+        }
         return false;
     }
 
     @Override
-    public boolean providesBindingForManagedItem(String itemName) {
-        //logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> providesBindingForManagedItem({}) is called!", itemName);
-        //return supportedBindingItems.contains(itemName);
-        return (this.getItemConfig(itemName) != null);
+    public boolean providesBindingForManagedItem(String item) {
+        return (this.getItemConfig(item) != null);
     }
 
     @Override
-    public boolean providesBindingForManagedTarget(String targetItemName) {
-        //logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> providesBindingForManagedTarget({}) is called!", itemName);
-        return targetBindingItems.containsKey(targetItemName);
+    public boolean providesBindingForManagedTarget(String target) {
+        return targetBindingItems.containsKey(target);
+    }
+
+    @Override
+    public boolean providesBindingForManagedSensor(String sensor) {
+        if(providesBindingForManagedOnSensor(sensor)){
+            return true;
+        }
+        return providesBindingForManagedOffSensor(sensor);
+    }
+
+    @Override
+    public boolean providesBindingForManagedOnSensor(String sensor) {
+        return onSensorBindingItems.contains(sensor);
+    }
+
+    @Override
+    public boolean providesBindingForManagedOffSensor(String sensor) {
+        return offSensorBindingItems.contains(sensor);
     }
 
     /**
@@ -107,6 +135,7 @@ public class ManagedSwitchGenericBindingProvider extends AbstractGenericBindingP
                     String[] optional_parts = optional.split("=", 2);
                     String key = optional_parts[0];
                     String value = optional_parts[1];
+                    String[] multivalue = value.split("\\+");
 
                     // handle "timeout" argument
                     if(key.equals("timeout")){
@@ -114,12 +143,12 @@ public class ManagedSwitchGenericBindingProvider extends AbstractGenericBindingP
                     }
 
                     // handle "on" argument
-                    else if(key.equals("on")){
+                    else if(key.equals("on_enabled")){
                         config.setOnEnabled(Boolean.parseBoolean(value));
                     }
 
                     // handle "off" argument
-                    else if(key.equals("off")){
+                    else if(key.equals("off_enabled")){
                         config.setOffEnabled(Boolean.parseBoolean(value));
                     }
 
@@ -128,6 +157,26 @@ public class ManagedSwitchGenericBindingProvider extends AbstractGenericBindingP
                         config.setInstantUpdateEnabled(Boolean.parseBoolean(value));
                     }
 
+                    // handle "sensor" argument (supports multiple values)
+                    else if(key.equals("sensor")){
+                        for (String val : multivalue) {
+                            config.addSensor(val);
+                        }
+                    }
+
+                    // handle "on_sensor" argument (supports multiple values)
+                    else if(key.equals("on_sensor")){
+                        for (String val : multivalue) {
+                            config.addOnSensor(val);
+                        }
+                    }
+
+                    // handle "off_sensor" argument (supports multiple values)
+                    else if(key.equals("off_sensor")){
+                        for (String val : multivalue) {
+                            config.addOffSensor(val);
+                        }
+                    }
                 }
             }
         }
@@ -138,10 +187,30 @@ public class ManagedSwitchGenericBindingProvider extends AbstractGenericBindingP
 
     @Override
     protected void addBindingConfig(Item item, BindingConfig config) {
+        // add  target
         String target = ((ManagedSwitchBindingConfig)config).getTarget();
         if(target != null) {
             targetBindingItems.put(target, item.getName());
         }
+
+        // add "ON" sensors
+        Collection<String> onSensors = ((ManagedSwitchBindingConfig)config).getOnSensors();
+        for(String sensor : onSensors) {
+            if (sensor != null && !onSensorBindingItems.contains(sensor)) {
+                logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> ON SENSOR: {}", sensor);
+                onSensorBindingItems.add(sensor);
+            }
+        }
+
+        // add "OFF" sensors
+        Collection<String> offSensors = ((ManagedSwitchBindingConfig)config).getOffSensors();
+        for(String sensor : offSensors) {
+            if (sensor != null && !offSensorBindingItems.contains(sensor)) {
+                logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> OFF SENSOR: {}", sensor);
+                offSensorBindingItems.add(sensor);
+            }
+        }
+
         super.addBindingConfig(item, config);
     }
 
@@ -169,9 +238,37 @@ public class ManagedSwitchGenericBindingProvider extends AbstractGenericBindingP
     }
 
     @Override
-    public String getItemNameFromTarget(String targetItemName) {
-        if(this.targetBindingItems.containsKey(targetItemName)) {
-            return this.targetBindingItems.get(targetItemName);
+    public String getItemNameFromTarget(String target) {
+        if(this.targetBindingItems.containsKey(target)) {
+            return this.targetBindingItems.get(target);
+        }
+        return null;
+    }
+
+    @Override
+    public String[] getItemNamesFromOnSensor(String sensor){
+        if(this.onSensorBindingItems.contains(sensor)) {
+            Set<String> itemsNames = new HashSet<>();
+            for(String itemName : getItemNames()){
+                if(getItemConfig(itemName).hasOnSensor(sensor)){
+                    itemsNames.add(itemName);
+                }
+            }
+            return itemsNames.toArray(new String[0]);
+        }
+        return null;
+    }
+
+    @Override
+    public String[] getItemNamesFromOffSensor(String sensor){
+        if(this.offSensorBindingItems.contains(sensor)) {
+            Set<String> itemsNames = new HashSet<>();
+            for(String itemName : getItemNames()){
+                if(getItemConfig(itemName).hasOffSensor(sensor)){
+                    itemsNames.add(itemName);
+                }
+            }
+            return itemsNames.toArray(new String[0]);
         }
         return null;
     }

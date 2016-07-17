@@ -8,10 +8,7 @@
  */
 package org.openhab.binding.managedswitch.internal;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import org.openhab.binding.managedswitch.ManagedSwitchBindingConfig;
 import org.openhab.binding.managedswitch.ManagedSwitchBindingProvider;
@@ -22,6 +19,7 @@ import org.openhab.core.items.Item;
 import org.openhab.core.items.ItemNotFoundException;
 import org.openhab.core.items.ItemRegistry;
 import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.osgi.framework.BundleContext;
@@ -37,8 +35,6 @@ import org.slf4j.LoggerFactory;
  * @since 0.1-SNAPSHOT
  */
 public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBindingProvider> {
-
-    Map<String, Timer> timeoutTimers = new HashMap<>();
 
 	private static final Logger logger =
 		LoggerFactory.getLogger(ManagedSwitchBinding.class);
@@ -58,7 +54,7 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
 	 * the refresh interval which is used to poll values from the ManagedSwitch
 	 * server (optional, defaults to 60000ms)
 	 */
-	private long refreshInterval = 60000;
+	private long refreshInterval = 1000;
 
 
 	public ManagedSwitchBinding() {
@@ -163,6 +159,15 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
 	protected void execute() {
 		// the frequently executed code (polling) goes here ...
 		//logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> execute() method is called!");
+
+        // iterate over all provider instances and then iterate over each named item in the provider
+        for (ManagedSwitchBindingProvider provider : providers) {
+            Collection<String> names = provider.getItemNames();
+            for (String name : names) {
+                // process the timeout timer tick for each provider named item
+                processItemTimeout(provider, name);
+            }
+        }
 	}
 
 	/**
@@ -213,40 +218,73 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
 	 */
 	@Override
 	protected void internalReceiveUpdate(String itemName, State newState) {
-
         logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> internalReceiveUpdate({},{}) is called!", itemName, newState);
 
-        // handle the "ON" and "OFF" updated states
-        if(OnOffType.OFF.equals(newState) || OnOffType.ON.equals(newState)){
-            for (ManagedSwitchBindingProvider provider : providers) {
+        // iterate over all the managed binding providers
+        for (ManagedSwitchBindingProvider provider : providers) {
+            // handle the "ON" and "OFF" updated states for "target" items
+            if((OnOffType.OFF.equals(newState) || OnOffType.ON.equals(newState)) && provider.providesBindingForManagedTarget(itemName)) {
+                // get managed/virtual item name from target item
+                String managedItemName = provider.getItemNameFromTarget(itemName);
+                if (managedItemName != null) {
 
-                // determine if this update is for a managed target item
-                if (provider.providesBindingForManagedTarget(itemName)) {
+                    // get managed/virtual item by name from the item registry
+                    Item managedItem = null;
+                    try {
+                        managedItem = itemRegistry.getItem(managedItemName);
 
-                    // the item name received in this method represents the target item
-                    final String targetItemName = itemName;
+                        // only proceed with update if the state has changed (ignore duplicate update notifications)
+                        // NOTE: we only update on an actual change in state because polled "refresh" events
+                        //       can send duplicate/same state info messages
+                        if (!managedItem.getState().equals(newState)) {
 
-                    // get managed/virtual item name from target item
-                    final String managedItemName = provider.getItemNameFromTarget(targetItemName);
-                    if(managedItemName != null) {
+                            // publish updated state to the managed/virtual item
+                            eventPublisher.postUpdate(managedItemName, newState);
 
-                        // get managed/virtual item by name from the item registry
-                        Item managedItem = null;
-                        try {
-                            managedItem = itemRegistry.getItem(managedItemName);
+                            // update item timeout
+                            updateItemTimeout(provider, managedItemName, OnOffType.ON.equals(newState));
+                        }
+                    } catch (ItemNotFoundException e) {
+                        logger.error(e.getMessage());
+                        continue;
+                    }
+                }
+            }
 
-                            // only proceed with update if the state has changed (ignore duplicate update notifications)
-                            if(!managedItem.getState().equals(newState)){
+            // handle the "OPEN" states for "sensor" items
+            if(OpenClosedType.OPEN.equals(newState) && provider.providesBindingForManagedOnSensor(itemName)){
+                // get managed/virtual item name from target item
+                String[] managedItemNames = provider.getItemNamesFromOnSensor(itemName);
+                for(String managedItemName : managedItemNames) {
+                    // get item configuration by managed/virtual item name
+                    ManagedSwitchBindingConfig itemConfig = provider.getItemConfig(managedItemName);
+                    if(itemConfig != null) {
+                        // only proceed with update if the state has changed (ignore duplicate update notifications)
+                        if (itemConfig.isOnEnabled()) {
+                            // publish updated state to the managed/virtual item
+                            eventPublisher.sendCommand(managedItemName, OnOffType.ON);
+                        } else {
+                            // update item timeout if needed
+                            updateItemTimeout(provider, managedItemName, true);
+                        }
+                    }
+                }
+            }
 
-                                // publish updated state to the managed/virtual item
-                                eventPublisher.postUpdate(managedItemName, newState);
-
-                                // update item timeout
-                                updateItemTimeout(provider, managedItemName, OnOffType.ON.equals(newState));
-                            }
-                        } catch (ItemNotFoundException e) {
-                            logger.error(e.getMessage());
-                            continue;
+            // handle the "CLOSED" state for "sensor" items
+            if(OpenClosedType.CLOSED.equals(newState) && provider.providesBindingForManagedOffSensor(itemName)){
+                // get managed/virtual item name from target item
+                String[] managedItemNames = provider.getItemNamesFromOffSensor(itemName);
+                for(String managedItemName : managedItemNames) {
+                    // get item configuration by managed/virtual item name
+                    ManagedSwitchBindingConfig itemConfig = provider.getItemConfig(managedItemName);
+                    if(itemConfig != null) {
+                        if (itemConfig.isOffEnabled()) {
+                            // publish updated state to the managed/virtual item
+                            eventPublisher.sendCommand(managedItemName, OnOffType.OFF);
+                        } else {
+                            // update item timeout if needed
+                            updateItemTimeout(provider, managedItemName, false);
                         }
                     }
                 }
@@ -260,46 +298,54 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
         final ManagedSwitchBindingConfig itemConfig = provider.getItemConfig(itemName);
         if(itemConfig != null) {
 
-            // get timer from mapped items
-            Timer timer = null;
-            if(!timeoutTimers.containsKey(itemName)){
-                timer = new Timer();
-                timeoutTimers.put(itemName, timer);
-            } else{
-                timer = timeoutTimers.get(itemName);
-            }
-
             // cancel any existing timer
-            if (timer != null) {
-                timer.cancel();
+            if (!onState && itemConfig.hasRemaining()){
                 logger.warn(">>>>>>>>>>> [CANCEL MANAGED TIMEOUT] >>>>>>>>>>>>>>> ({})", itemName);
+                itemConfig.clearRemaining();
             }
 
             // set timeout if this item is in the ON state
-            if (onState && itemConfig.hasTimeout()) {
+            else if (onState && itemConfig.hasTimeout()) {
 
                 logger.warn(">>>>>>>>>>> [STARTED MANAGED TIMEOUT] >>>>>>>>>>>>>>> ({})", itemName);
 
                 // create new timer
-                timer = new Timer();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        logger.warn(">>>>>>>>>>> [EXECUTING MANAGED TIMEOUT] {}", itemName);
-                        // remove this timer from the mapped items
-                        //timeoutTimers.remove(itemName);
-                        Timer tmr = timeoutTimers.get(itemName);
-                        tmr = null;
+                itemConfig.setRemaining(itemConfig.getTimeout());
+            }
+        }
+    }
 
-                        // send OFF command instruction to target item
-                        eventPublisher.sendCommand(itemConfig.getTarget(), OnOffType.OFF);
+    private void processItemTimeout(ManagedSwitchBindingProvider provider, final String itemName) {
 
-                        // instant update feedback for managed/virtual item
-                        if(itemConfig.isInstantUpdateEnabled()) {
-                            eventPublisher.postUpdate(itemName, OnOffType.OFF);
-                        }
-                    }
-                }, itemConfig.getTimeout() * 1000);
+        // get item configuration by managed/virtual item name
+        final ManagedSwitchBindingConfig itemConfig = provider.getItemConfig(itemName);
+        if(itemConfig != null && itemConfig.hasTimeout() && itemConfig.hasRemaining()) {
+
+            // get remaining time
+            int remaining = itemConfig.getRemaining();
+
+            // decrement remaining time
+            remaining--;
+
+            // process "OFF" execution if there is no more remaining time
+            if(remaining <= 0){
+                logger.warn(">>>>>>>>>>> [EXECUTING MANAGED TIMEOUT] {}", itemName);
+
+                // send OFF command instruction to target item
+                eventPublisher.sendCommand(itemConfig.getTarget(), OnOffType.OFF);
+
+                // instant update feedback for managed/virtual item
+                if (itemConfig.isInstantUpdateEnabled()) {
+                    eventPublisher.postUpdate(itemName, OnOffType.OFF);
+                }
+
+                // clear remaining time
+                itemConfig.clearRemaining();
+            }
+            else{
+                // update remaining time
+                itemConfig.setRemaining(remaining);
+                logger.warn(">>>>>>>>>>> [MANAGED SWITCH] {} will timeout in {} seconds", itemName, remaining);
             }
         }
     }
