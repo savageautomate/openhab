@@ -18,6 +18,7 @@ import org.openhab.core.binding.AbstractActiveBinding;
 import org.openhab.core.items.Item;
 import org.openhab.core.items.ItemNotFoundException;
 import org.openhab.core.items.ItemRegistry;
+import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.types.Command;
@@ -179,19 +180,31 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
         logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> internalReceiveCommand({},{}) is called!", itemName, command);
 
         // forward the "ON" | "OFF" command from the managed (virtual) switch to the physical target switch
-        if(OnOffType.OFF.equals(command) || OnOffType.ON.equals(command)){
+        if(command instanceof DecimalType || command instanceof OnOffType){
             for (ManagedSwitchBindingProvider provider : providers) {
                 if (provider.providesBindingForManagedItem(itemName)) {
 
                     // get item configuration by managed/virtual item name
                     final ManagedSwitchBindingConfig itemConfig = provider.getItemConfig(itemName);
 
+                    boolean isCommandOn = false;
+                    boolean isCommandOff = false;
+
+                    if(command instanceof OnOffType) {
+                        isCommandOn = OnOffType.ON.equals(command);
+                        isCommandOff = OnOffType.OFF.equals(command);
+                    }
+                    if(command instanceof DecimalType) {
+                        isCommandOn = ((DecimalType)command).intValue() > 0;
+                        isCommandOff = ((DecimalType)command).intValue() <= 0;
+                    }
+
                     // validate command enabled
-                    if(OnOffType.ON.equals(command) && !itemConfig.isOnEnabled()){
+                    if(isCommandOn && !itemConfig.isOnEnabled()){
                         logger.warn("The 'ON' command is not enabled on this managed item.");
                         continue;
                     }
-                    else if(OnOffType.OFF.equals(command) && !itemConfig.isOffEnabled()){
+                    else if(isCommandOff && !itemConfig.isOffEnabled()){
                         logger.warn("The 'OFF' command is not enabled on this managed item.");
                         continue;
                     }
@@ -201,11 +214,11 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
 
                     // instant update feedback for managed/virtual item
                     if(itemConfig.isInstantUpdateEnabled()) {
-                        eventPublisher.postUpdate(itemName, OnOffType.ON.equals(command) ? OnOffType.ON : OnOffType.OFF);
+                        eventPublisher.postUpdate(itemName, (State)command);
                     }
 
                     // update item timeout
-                    updateItemTimeout(provider, itemName, OnOffType.ON.equals(command));
+                    updateItemTimeout(provider, itemName, isCommandOn);
 
                     continue;
                 }
@@ -222,8 +235,9 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
 
         // iterate over all the managed binding providers
         for (ManagedSwitchBindingProvider provider : providers) {
+
             // handle the "ON" and "OFF" updated states for "target" items
-            if((OnOffType.OFF.equals(newState) || OnOffType.ON.equals(newState)) && provider.providesBindingForManagedTarget(itemName)) {
+            if((newState instanceof DecimalType || newState instanceof OnOffType) && provider.providesBindingForManagedTarget(itemName)) {
                 // get managed/virtual item name from target item
                 String managedItemName = provider.getItemNameFromTarget(itemName);
                 if (managedItemName != null) {
@@ -238,11 +252,28 @@ public class ManagedSwitchBinding extends AbstractActiveBinding<ManagedSwitchBin
                         //       can send duplicate/same state info messages
                         if (!managedItem.getState().equals(newState)) {
 
-                            // publish updated state to the managed/virtual item
-                            eventPublisher.postUpdate(managedItemName, newState);
+                            boolean isStateOn = false;
+                            if(newState instanceof DecimalType){
+                                isStateOn = ((DecimalType)newState).intValue() > 0;
+
+                                // publish updated state to the managed/virtual item
+                                if(managedItem.getAcceptedDataTypes().contains(DecimalType.class)){
+                                    eventPublisher.postUpdate(managedItemName, newState);
+                                }
+                                else if(managedItem.getAcceptedDataTypes().contains(OnOffType.class)){
+                                    //logger.warn(">>>>>>>>>>> [MANAGED SWITCH] >>>>>>>>>>>>>>> internalReceiveUpdate({},{}) is called <CONVERT DECIMAL TO ON|OFF>!", itemName, newState);
+                                    eventPublisher.postUpdate(managedItemName, (isStateOn) ? OnOffType.ON : OnOffType.OFF);
+                                }
+                            }
+                            else if(newState instanceof OnOffType){
+                                isStateOn = OnOffType.ON.equals(newState);
+
+                                // publish updated state to the managed/virtual item
+                                eventPublisher.postUpdate(managedItemName, newState);
+                            }
 
                             // update item timeout
-                            updateItemTimeout(provider, managedItemName, OnOffType.ON.equals(newState));
+                            updateItemTimeout(provider, managedItemName, isStateOn);
                         }
                     } catch (ItemNotFoundException e) {
                         logger.error(e.getMessage());
